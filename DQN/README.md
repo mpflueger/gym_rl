@@ -6,16 +6,16 @@ I created this implementation for educational purposes, if you want to use it fo
 
 ## Usage
 To train a model:
-```bash
+```
 python {problem.py} train
 ```
 
 To test a trained model:
-```bash
+```
 python {problem.py} test --restore [checkpoint location]
 ```
 
 Or just check out the options:
-```bash
+```
 python {problem.py} --help
 ```
