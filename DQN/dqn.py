@@ -151,7 +151,11 @@ class DQN:
 
             # Sample minibatch from replay buffer
             minibatch = self._get_minibatch(self.batch_size)
-            feed = {self.x: [], self.a: [], self.r: [], self.xp: [], self.live: []}
+            feed = {self.x: [],
+                    self.a: [],
+                    self.r: [],
+                    self.xp: [],
+                    self.live: []}
             for t in minibatch:
                 feed[self.x].append(t[0])
                 feed[self.a].append(t[1])
