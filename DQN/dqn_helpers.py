@@ -4,19 +4,28 @@ __author__ = "Max Pflueger"
 import argparse
 import os
 import re
+from six.moves import input
 import tensorflow as tf
 
 def parse_args(name):
     """ Provide standard argument parsing """
+    home = os.path.expanduser('~')
+    save_default = os.path.join(home, "tf_data/{}.ckpt".format(name))
+    log_default = os.path.join(home, "{}-log".format(name))
+
     parser = argparse.ArgumentParser(description="Run DQN for {}".format(name))
     parser.add_argument('mode', metavar='mode', default='train',
         choices=['train', 'test'],
         help="What do you want to do? {train, test}")
     parser.add_argument('--save', '-s',
-        default='checkpoints/{}.ckpt'.format(name),
+        #default='checkpoints/{}.ckpt'.format(name),
+        default=save_default,
         help="Change the default checkpoint save location")
     parser.add_argument('--restore', '-r',
         help="Restore a checkpoint before beginning")
+    parser.add_argument('--log',
+        default=log_default,
+        help="Directory to save log files")
     return parser.parse_args()
 
 def process_save_path(save_path, mode):
@@ -30,7 +39,7 @@ def process_save_path(save_path, mode):
             checkpoint_exists = True
 
     if checkpoint_exists and mode == 'train':
-        resp = raw_input("Save path \'{}\' already exists, use anyway?"
+        resp = input("Save path \'{}\' already exists, use anyway?"
                           " [y/N]: ".format(save_path))
         if not re.match(r'[yY](es)?$', resp):
             save_path = None

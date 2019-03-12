@@ -2,8 +2,10 @@
 __author__ = "Max Pflueger"
 
 import numpy as np
+import os
 import random
 import re
+
 import tensorflow as tf
 
 class DQN:
@@ -27,6 +29,11 @@ class DQN:
         # Set the supplied hyperparameters
         for k in hypers.keys():
             setattr(self, k, hypers[k])
+
+        self.global_step = tf.Variable(0, trainable=False, name='global_step')
+        self.inc_global_step_op = tf.assign_add(self.global_step, 1)
+        self.global_episode = tf.Variable(0, trainable=False, name='global_episode')
+        self.inc_global_episode_op = tf.assign_add(self.global_episode, 1)
 
         # Placeholders
         # state: x, action: a, reward: r, new state: xp,
@@ -85,6 +92,12 @@ class DQN:
         # Create the saver 
         self.saver = tf.train.Saver()
 
+        # Log histograms
+        tf.summary.scalar("TD-loss", self.L)
+        for v in tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES):
+            tf.summary.histogram(v.name, v)
+        self.merged_summaries = tf.summary.merge_all()
+
         # Some debug stuff
         if False:
             print("List Variables:")
@@ -122,8 +135,9 @@ class DQN:
             n = len(self.replay_buffer)
         return random.sample(self.replay_buffer, n)
 
-    def train_episode(self, sess, epsilon=0.0):
+    def train_episode(self, sess, epsilon=0.0, writer=None):
         obs = self.env.reset()
+        r_sum = 0
         for _ in range(self.episode_len):
             #self.env.render()
 
@@ -140,6 +154,7 @@ class DQN:
             obs_new, r, done, info = self.env.step(a)
             if self.r_calc:
                 r = self.r_calc(obs_new, r)
+            r_sum += r
             
             # Add transition to replay buffer
             live = 1
@@ -164,8 +179,12 @@ class DQN:
                 feed[self.live].append(t[4])
 
             # Perform gradient update
-            sess.run(self.train_op, feed_dict=feed)
+            [_, summary] = sess.run([self.train_op, self.merged_summaries], feed_dict=feed)
+            step = sess.run(self.inc_global_step_op)
             self.c += 1
+
+            if writer:
+                writer.add_summary(summary, step)
 
             # Check if time to update target network 
             if self.c >= self.C:
@@ -176,22 +195,34 @@ class DQN:
             # End episode when done
             if self.terminate_episodes and done:
                 break
+        sess.run(self.inc_global_episode_op)
+        return r_sum
 
-    def train(self, sess, episodes, save_path=None):
+    def train(self, sess, episodes, save_path=None, log_dir=None):
         """ Train the model for a set number of episodes """
+        train_writer = tf.summary.FileWriter(
+            os.path.join(log_dir, "train"), graph=sess.graph)
+
         epsilon_slope = (self.epsilon_0 - self.epsilon_f)\
                         / self.epsilon_episodes
-        for i in range(episodes):
-            if i < self.epsilon_episodes:
-                epsilon = self.epsilon_0 - (i * epsilon_slope)
+        ep = tf.train.global_step(sess, self.global_episode)
+        for _ in range(episodes):
+            if ep < self.epsilon_episodes:
+                epsilon = self.epsilon_0 - (ep * epsilon_slope)
             else:
                 epsilon = self.epsilon_f
-            self.train_episode(sess, epsilon=epsilon)
+
+            r = self.train_episode(sess, epsilon=epsilon, writer=train_writer)
+
+            ep = tf.train.global_step(sess, self.global_episode)
+            r_summary = tf.Summary(value=[
+                tf.Summary.Value(tag="reward", simple_value=r)])
+            train_writer.add_summary(r_summary, ep)
 
             # Print current test performance
-            if i % 50 == 0:
+            if ep % 50 == 0:
                 print("Test at episode {}, performance: {}".format(
-                    i, self.test(sess)))
+                    ep, self.test(sess)))
                 if save_path:
                     sp_prefix = self.saver.save(sess, save_path)
                     print("Model saved in path {}".format(sp_prefix))

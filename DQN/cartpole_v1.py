@@ -49,7 +49,7 @@ if __name__ == "__main__":
             my_DQN.restore(sess, args.restore)
 
         if args.mode == 'train':
-            my_DQN.train(sess, 50000, save_path=save_path)
+            my_DQN.train(sess, 50000, save_path=save_path, log_dir=args.log)
         if args.mode == 'test':
             episodes = 10
             perf = my_DQN.test(sess, episodes=episodes)
