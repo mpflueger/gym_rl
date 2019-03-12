@@ -11,7 +11,7 @@ def parse_args(name):
     """ Provide standard argument parsing """
     home = os.path.expanduser('~')
     save_default = os.path.join(home, "tf_data/{}.ckpt".format(name))
-    log_default = os.path.join(home, "{}-log".format(name))
+    log_default = os.path.join(home, "tf_data/{}-log".format(name))
 
     parser = argparse.ArgumentParser(description="Run DQN for {}".format(name))
     parser.add_argument('mode', metavar='mode', default='train',
