@@ -1,4 +1,4 @@
-""" Train a DQN for the MountainCar """
+""" Train a DDPG for the MountainCar """
 __author__ = "Max Pflueger"
 
 import argparse
@@ -74,15 +74,23 @@ def process_save_path(save_path, mode):
 
 def parse_args(name):
     """ Provide standard argument parsing """
+    home = os.path.expanduser('~')
+    save_default = os.path.join(home, "tf_data/{}.ckpt".format(name))
+    log_default = os.path.join(home, "tf_data/{}-log".format(name))
+
     parser = argparse.ArgumentParser(description="Run DDPG for {}".format(name))
     parser.add_argument('mode', metavar='mode', default='train',
         choices=['train', 'test'],
         help="What do you want to do? {train, test}")
     parser.add_argument('--save', '-s',
-        default='checkpoints/{}.ckpt'.format(name),
+        #default='checkpoints/{}.ckpt'.format(name),
+        default=save_default,
         help="Change the default checkpoint save location")
     parser.add_argument('--restore', '-r',
         help="Restore a checkpoint before beginning")
+    parser.add_argument('--log',
+        default=log_default,
+        help="Directory to save log files")
     return parser.parse_args()
 
 
@@ -122,7 +130,7 @@ if __name__ == "__main__":
 
         if args.mode == 'train':
             for _ in range(10000):
-                my_DDPG.train(sess, 5, save_path=save_path)
+                my_DDPG.train(sess, 5, save_path=save_path, log_dir=args.log)
                 my_DDPG.test_episode(sess, render=True)
 
         if args.mode == 'test':

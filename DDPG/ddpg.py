@@ -2,6 +2,7 @@
 __author__ = "Max Pflueger"
 
 import numpy as np
+import os
 import random
 import re
 
@@ -152,6 +153,7 @@ class DDPG:
         noise = np.zeros(self.env.action_space.shape)
         noise_mu = np.zeros(self.env.action_space.shape)
 
+        r_sum = 0
         step = tf.train.global_step(sess, self.global_step)
         for _ in range(self.episode_len):
             #self.env.render()
@@ -179,6 +181,7 @@ class DDPG:
 
             if self.r_calc:
                 r = self.r_calc(obs_new, r)
+            r_sum += r
 
             live = 1
             if done:
@@ -217,15 +220,22 @@ class DDPG:
 
             if self.terminate_episodes and done:
                 break
+        sess.run(self.inc_global_episode_op)
+        return r_sum
 
-        return step
-
-    def train(self, sess, episodes, save_path=None):
+    def train(self, sess, episodes, save_path=None, log_dir=None):
         """ Train the model for a set number of episodes """
+        train_writer = tf.summary.FileWriter(
+            os.path.join(log_dir, "train"), graph=sess.graph)
+
         for _ in range(episodes):
-            step = self.train_episode(sess)
-            ep = sess.run(self.inc_global_episode_op)
+            r = self.train_episode(sess)
+            step = tf.train.global_step(sess, self.global_step)
+            ep = tf.train.global_step(sess, self.global_episode)
             print(ep)
+            r_summary = tf.Summary(value=[
+                tf.Summary.Value(tag="reward", simple_value=r)])
+            train_writer.add_summary(r_summary, ep)
 
             if ep % 50 == 0:
                 perf = self.test(sess)
