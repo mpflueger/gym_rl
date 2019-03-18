@@ -49,44 +49,6 @@ def r(x,r):
     return r + math.exp(-10 * abs(x[0] - 0.45))
 
 
-# def process_save_path(save_path, mode):
-#     """ Prevent accidentally overwritng a checkpoint file """
-#     save_path = os.path.abspath(save_path)
-
-#     checkpoint_exists = False
-#     if os.path.exists(os.path.dirname(save_path)):
-#         if [f for f in os.listdir(os.path.dirname(save_path))
-#               if re.match(os.path.basename(save_path), f)]:
-#             checkpoint_exists = True
-
-#     if checkpoint_exists and mode == 'train':
-#         resp = input("Save path \'{}\' already exists, use anyway?"
-#                           " [y/N]: ".format(save_path))
-#         if not re.match(r'[yY](es)?$', resp):
-#             save_path = None
-#             print('\033[91m' + "  Checkpoints will NOT be saved!"
-#                   + '\033[0m')
-
-#     if not checkpoint_exists and mode == 'test':
-#         print("Cannot use 'test' mode without a checkpoint.")
-
-#     return save_path
-
-
-# def parse_args(name):
-#     """ Provide standard argument parsing """
-#     parser = argparse.ArgumentParser(description="Run DDPG for {}".format(name))
-#     parser.add_argument('mode', metavar='mode', default='train',
-#         choices=['train', 'test'],
-#         help="What do you want to do? {train, test}")
-#     parser.add_argument('--save', '-s',
-#         default='checkpoints/{}.ckpt'.format(name),
-#         help="Change the default checkpoint save location")
-#     parser.add_argument('--restore', '-r',
-#         help="Restore a checkpoint before beginning")
-#     return parser.parse_args()
-
-
 if __name__ == "__main__":
     print("WARNING: this file is not done.")
     env_name = 'LunarLanderContinuous-v2'
