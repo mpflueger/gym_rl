@@ -261,6 +261,7 @@ class DDPG:
             obs = np.reshape(obs, self.env.observation_space.shape)
             feed = {self.x: [obs]}
             [a, Q] = sess.run([self.mu, self.Q_actor], feed_dict=feed)
+            a = np.reshape(a, self.env.action_space.shape)
 
             if render:
                 print(" State: {}, Q: {}, a: {}".format(obs, Q, a))
